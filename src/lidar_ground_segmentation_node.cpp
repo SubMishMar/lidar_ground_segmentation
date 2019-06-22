@@ -15,6 +15,8 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 
+#include <pcl/filters/statistical_outlier_removal.h>
+
 class groundSegmenter {
 private:
     ros::NodeHandle nh;
@@ -71,9 +73,18 @@ public:
 //                  << coefficients->values[3]);
 
         pcl::PointCloud<pcl::PointXYZ>::Ptr
-                        plane(new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::copyPointCloud(*cloud, inlier_indices, *plane);
-        publishPlane(*plane, header);
+                        plane_unfiltered(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::copyPointCloud(*cloud, inlier_indices, *plane_unfiltered);
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr
+                plane_sor_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
+        sor.setInputCloud(plane_unfiltered);
+        sor.setMeanK(50);
+        sor.setStddevMulThresh (1.0);
+        sor.filter(*plane_sor_filtered);
+
+        publishPlane(*plane_sor_filtered, header);
     }
 
     void callback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg) {
