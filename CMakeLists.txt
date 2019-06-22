@@ -16,13 +16,12 @@ find_package(catkin REQUIRED COMPONENTS
 find_package( PCL REQUIRED)
 
 catkin_package(
-  INCLUDE_DIRS include
+  INCLUDE_DIRS
   CATKIN_DEPENDS
   DEPENDS PCL
 )
 
 include_directories(
-  include
   ${catkin_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
 )

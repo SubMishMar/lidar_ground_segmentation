@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+ <!--<param name ="/use_sim_time" value="true"/>-->
+    <node  pkg="lidar_ground_segmentation"
+           name="lidar_ground_segmentation_node"
+           type="lidar_ground_segmentation_node"
+           output="screen">
+    </node>
+</launch>
