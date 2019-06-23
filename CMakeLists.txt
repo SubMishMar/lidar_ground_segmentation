@@ -11,13 +11,24 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   tf
   tf_conversions
+  message_generation
 )
 
 find_package( PCL REQUIRED)
 
+add_message_files(
+  FILES
+  plane_equation.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
+
 catkin_package(
   INCLUDE_DIRS
-  CATKIN_DEPENDS
+  CATKIN_DEPENDS message_runtime
   DEPENDS PCL
 )
 
