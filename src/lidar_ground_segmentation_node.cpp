@@ -82,10 +82,10 @@ public:
             ros::shutdown();
         }
 
-        ROS_INFO_STREAM("Normal Vector: [ "
-                  << coefficients->values[0] << " "
-                  << coefficients->values[1] << " "
-                  << coefficients->values[2] << " ]");
+//        ROS_INFO_STREAM("Normal Vector: [ "
+//                  << coefficients->values[0] << " "
+//                  << coefficients->values[1] << " "
+//                  << coefficients->values[2] << " ]");
 
         pcl::PointCloud<pcl::PointXYZ>::Ptr
                         plane_unfiltered(new pcl::PointCloud<pcl::PointXYZ>);
