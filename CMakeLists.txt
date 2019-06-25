@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
+set (CMAKE_CXX_STANDARD 14)
 project(lidar_ground_segmentation)
 
 find_package(catkin REQUIRED COMPONENTS
