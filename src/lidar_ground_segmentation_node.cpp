@@ -28,7 +28,7 @@ private:
 
 public:
     groundSegmenter() {
-        cloud_sub = nh.subscribe("/kitti/velo/pointcloud_withring", 1,
+        cloud_sub = nh.subscribe("/kitti/velo/pointcloud", 1,
                 &groundSegmenter::callback, this);
         ground_plane_pub = nh.advertise<sensor_msgs::PointCloud2>
                 ("/kitti/velo/pointcloud_groundplane", 1);
