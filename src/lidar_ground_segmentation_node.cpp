@@ -15,6 +15,7 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 
+#include <pcl/filters/passthrough.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 
 #include "lidar_ground_segmentation/plane_equation.h"
@@ -28,7 +29,7 @@ private:
 
 public:
     groundSegmenter() {
-        cloud_sub = nh.subscribe("/kitti/velo/pointcloud_withring", 1,
+        cloud_sub = nh.subscribe("/kitti/velo/pointcloud", 1,
                 &groundSegmenter::callback, this);
         ground_plane_pub = nh.advertise<sensor_msgs::PointCloud2>
                 ("/kitti/velo/pointcloud_groundplane", 1);
@@ -61,6 +62,14 @@ public:
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
         *cloud = cloud_in;
 
+        pcl::PointCloud<pcl::PointXYZ>::Ptr
+                cloud_sor_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
+        sor.setInputCloud(cloud);
+        sor.setMeanK(50);
+        sor.setStddevMulThresh (1.0);
+        sor.filter(*cloud_sor_filtered);
+
         pcl::ModelCoefficients::Ptr coefficients
                                 (new pcl::ModelCoefficients);
         pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
@@ -72,11 +81,14 @@ public:
         seg.setModelType (pcl::SACMODEL_PLANE);
         seg.setMethodType (pcl::SAC_RANSAC);
         seg.setDistanceThreshold (0.05);
-        seg.setInputCloud (cloud);
-        seg.segment (*inliers, *coefficients);
+        seg.setInputCloud (cloud_sor_filtered);
+        seg.segment(*inliers, *coefficients);
 
         std::vector<int> inlier_indices(inliers->indices);
 
+        pcl::PointCloud<pcl::PointXYZ>::Ptr
+                ground_plane(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::copyPointCloud(*cloud_sor_filtered, inlier_indices, *ground_plane);
         if(inlier_indices.size() == 0) {
             ROS_ERROR("No Plane Detected!");
             ros::shutdown();
@@ -87,19 +99,9 @@ public:
 //                  << coefficients->values[1] << " "
 //                  << coefficients->values[2] << " ]");
 
-        pcl::PointCloud<pcl::PointXYZ>::Ptr
-                        plane_unfiltered(new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::copyPointCloud(*cloud, inlier_indices, *plane_unfiltered);
 
-        pcl::PointCloud<pcl::PointXYZ>::Ptr
-                plane_sor_filtered(new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
-        sor.setInputCloud(plane_unfiltered);
-        sor.setMeanK(50);
-        sor.setStddevMulThresh (1.0);
-        sor.filter(*plane_sor_filtered);
 
-        publishPlane(*plane_sor_filtered, coefficients, header);
+        publishPlane(*ground_plane, coefficients, header);
     }
 
     void callback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg) {
