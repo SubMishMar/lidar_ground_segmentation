@@ -57,15 +57,35 @@ public:
         surface_eqn_pub.publish(pln_eqn);
     }
 
+    pcl::PointCloud<pcl::PointXYZ>::Ptr passThroughFilter(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in,
+                           std::string axis) {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr
+                    cloud_filtered (new pcl::PointCloud<pcl::PointXYZ>);
+        // Create the filtering object
+        pcl::PassThrough<pcl::PointXYZ> pass;
+        pass.setInputCloud (cloud_in);
+        pass.setFilterFieldName (axis);
+        pass.setFilterLimits (-10, +10);
+        //pass.setFilterLimitsNegative (true);
+        pass.filter (*cloud_filtered);
+        return cloud_filtered;
+    }
+
     void segmentCloud(pcl::PointCloud<pcl::PointXYZ> cloud_in,
                       std_msgs::Header header) {
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
         *cloud = cloud_in;
 
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered_x
+                = passThroughFilter(cloud, "x");
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered_y
+                = passThroughFilter(cloud_filtered_x, "y");
+
         pcl::PointCloud<pcl::PointXYZ>::Ptr
                 cloud_sor_filtered(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
-        sor.setInputCloud(cloud);
+        sor.setInputCloud(cloud_filtered_y);
         sor.setMeanK(50);
         sor.setStddevMulThresh (1.0);
         sor.filter(*cloud_sor_filtered);
@@ -93,13 +113,6 @@ public:
             ROS_ERROR("No Plane Detected!");
             ros::shutdown();
         }
-
-//        ROS_INFO_STREAM("Normal Vector: [ "
-//                  << coefficients->values[0] << " "
-//                  << coefficients->values[1] << " "
-//                  << coefficients->values[2] << " ]");
-
-
 
         publishPlane(*ground_plane, coefficients, header);
     }
