@@ -58,14 +58,16 @@ public:
     }
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr passThroughFilter(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in,
-                           std::string axis) {
+                           std::string axis,
+                           double min,
+                           double max) {
         pcl::PointCloud<pcl::PointXYZ>::Ptr
                     cloud_filtered (new pcl::PointCloud<pcl::PointXYZ>);
         // Create the filtering object
         pcl::PassThrough<pcl::PointXYZ> pass;
         pass.setInputCloud (cloud_in);
         pass.setFilterFieldName (axis);
-        pass.setFilterLimits (-10, +10);
+        pass.setFilterLimits (min, max);
         //pass.setFilterLimitsNegative (true);
         pass.filter (*cloud_filtered);
         return cloud_filtered;
@@ -77,15 +79,18 @@ public:
         *cloud = cloud_in;
 
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered_x
-                = passThroughFilter(cloud, "x");
+                = passThroughFilter(cloud, "x", -10, 10);
 
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered_y
-                = passThroughFilter(cloud_filtered_x, "y");
+                = passThroughFilter(cloud_filtered_x, "y", -10, 10);
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered_z
+                = passThroughFilter(cloud_filtered_y, "z", -2,-1.5);
 
         pcl::PointCloud<pcl::PointXYZ>::Ptr
                 cloud_sor_filtered(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
-        sor.setInputCloud(cloud_filtered_y);
+        sor.setInputCloud(cloud_filtered_z);
         sor.setMeanK(50);
         sor.setStddevMulThresh (1.0);
         sor.filter(*cloud_sor_filtered);
